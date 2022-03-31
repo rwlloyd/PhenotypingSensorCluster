@@ -1,0 +1,91 @@
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Phenotyping Sensor UI</title>
+   </head>
+   <body style="max-width:400px;margin: auto;font-family:Arial, Helvetica, sans-serif;text-align:center; padding-top:50px">
+      <div><h1><br />Sensor Capture</h1></div>
+      <div> The first random number is: <span id='rand1'>-</span></div>
+      <div> The second random number is: <span id='rand2'>-</span></div>
+      <div><button type='button' id='BTN_CAP_HYP' style="padding: 10px 10px; width:200px;">Capture HSC-2</button><span id='hyp_captured'>-</span></div>
+      <div><button type='button' id='BTN_CAP_PHX' style="padding: 10px 10px; width:200px;">Capture Phenospex</button><span id='phx_captured'>-</span></div>
+      <div><button type='button' id='BTN_CAP_AUX' style="padding: 10px 10px; width:200px;">Capture AUX</button><span id='aux_captured'>-</span></div>
+      <div><button type='button' id='BTN_CAP_REX' style="padding: 10px 10px; width:200px;">Capture RedEdge</button><span id='rededge_captured'>-</span></div>
+      <!-- <div><p id="mrdiy_value" style="font-size:100px;margin:0"></p></div> -->
+      <!-- <div><button onclick="request_hyp()">Capture HSC-2</button></div> -->
+      <!-- <div><button onclick="request_phx()">Capture Phenospex</button></div> -->
+      
+   </body>
+   <script>
+        // Javascript section of the webpage that will be sent to the client
+        // create a variable for the websocket
+        var socket;
+        var msg = {
+          "type": "request",
+          "hyp": 0,
+          "phx": 0,
+          "aux": 0,
+          "rex": 0
+        };
+        // listen for a client clicking a button
+        document.getElementById('BTN_CAP_HYP').addEventListener('click', request_hyp); 
+        document.getElementById('BTN_CAP_PHX').addEventListener('click', request_phx);
+        document.getElementById('BTN_CAP_AUX').addEventListener('click', request_aux);
+        document.getElementById('BTN_CAP_REX').addEventListener('click', request_rex);
+
+        // init function. start websocket connection.
+        function init(){
+          
+          socket = new WebSocket("ws:/" + "/" + location.host + ":81");
+          socket.onopen = function(e) {console.log("[socket] socket.onopen "); };
+          socket.onerror = function(e) {  console.log("[socket] socket.onerror "); };
+          socket.onmessage = function(event) {  
+            processCommand(event);
+          };
+        }
+
+        // Function to process commands recieved by the client from the ucontroller
+        function processCommand(event){
+          var obj = JSON.parse(event.data);
+          document.getElementById('rand1').innerHTML = obj.rand1;
+          document.getElementById('rand2').innerHTML = obj.rand2;
+          document.getElementById('rededge_captured').innerHTML = obj.rededge_captured;
+          // &#10003; // green tick icon
+          //console.log(obj.rand1);
+          //console.log(obj.rand2);
+          //console.log("[socket] " + event.data);
+          //document.getElementById("my_value").innerHTML = obj.value;
+        }
+
+        // Functions to send data from the client to the microcontroller after button presses
+        function request_hyp(){
+          console.log("Capturing HyperSpectral");
+          msg.hyp = 1;
+          socket.send(JSON.stringify(msg));
+          msg.hyp = 0;
+        }
+        function request_phx(){
+          console.log("Capturing Phenospex");
+          msg.phx = 1;
+          socket.send(JSON.stringify(msg));
+          msg.phx = 0;
+        }
+        function request_aux(){
+          console.log("Triggering Auxiliary");
+          msg.aux = 1;
+          socket.send(JSON.stringify(msg));
+          msg.aux = 0;
+        }
+        function request_rex(){
+          console.log("Triggering RedEdge");
+          msg.rex = 1;
+          socket.send(JSON.stringify(msg));
+          msg.rex = 0;
+        }
+
+        window.onload = function(event){
+          init();
+        }
+      </script>
+</html>
